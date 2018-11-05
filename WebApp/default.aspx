@@ -10,6 +10,9 @@
     <form id="form1" runat="server">
         <div>
             <asp:Button ID="btnCallService" runat="server" Text="Call Service" />
+            <div id="divOutput" runat="server">
+
+            </div>
         </div>
     </form>
 </body>
