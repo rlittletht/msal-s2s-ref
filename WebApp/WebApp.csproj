@@ -119,6 +119,7 @@
       <DependentUpon>default.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="startup.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
