@@ -13,5 +13,10 @@ namespace WebApp
         {
 
         }
+
+        protected void DoCallService(object sender, EventArgs e)
+        {
+            divOutput.InnerHtml += "DoCallService Called<br/>";
+        }
     }
 }
