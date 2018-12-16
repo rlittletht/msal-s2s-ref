@@ -16,6 +16,13 @@ namespace WebApp
         private string m_sIdentity;
         private string m_sTenant;
 
+        /*----------------------------------------------------------------------------
+        	%%Function: HandleAuth
+        	%%Qualified: WebApp._default.HandleAuth
+
+            Handle authentication for the page, including setting up the controls
+            on the page to reflect the authentication state.
+        ----------------------------------------------------------------------------*/
         void HandleAuth()
         {
             // if the request is authenticated, then we are authenticated and have information
@@ -46,6 +53,10 @@ namespace WebApp
             }
         }
 
+        /*----------------------------------------------------------------------------
+        	%%Function: DoSignInClick
+        	%%Qualified: WebApp._default.DoSignInClick
+        ----------------------------------------------------------------------------*/
         public void DoSignInClick(object sender, EventArgs args)
         {
             string sReturnAddress = "/webapp/default.aspx";
@@ -58,6 +69,10 @@ namespace WebApp
             }
         }
 
+        /*----------------------------------------------------------------------------
+        	%%Function: DoSignOutClick
+        	%%Qualified: WebApp._default.DoSignOutClick
+        ----------------------------------------------------------------------------*/
         public void DoSignOutClick(object sender, EventArgs args)
         {
             HttpContext.Current.GetOwinContext().Authentication.SignOut(
@@ -65,12 +80,24 @@ namespace WebApp
                 CookieAuthenticationDefaults.AuthenticationType);
         }
 
+        /*----------------------------------------------------------------------------
+        	%%Function: Page_Load
+        	%%Qualified: WebApp._default.Page_Load
+
+            setup the page for authentication and update the current logged in state       	
+        ----------------------------------------------------------------------------*/
         protected void Page_Load(object sender, EventArgs e)
         {
             HandleAuth();
             divOutput.InnerHtml += $"Current User: {m_sIdentity}<br/>Tenant: {m_sTenant}";
         }
 
+        /*----------------------------------------------------------------------------
+        	%%Function: DoCallService
+        	%%Qualified: WebApp._default.DoCallService
+
+            call the WebApi       	
+        ----------------------------------------------------------------------------*/
         protected void DoCallService(object sender, EventArgs e)
         {
             divOutput.InnerHtml += "DoCallService Called<br/>";
