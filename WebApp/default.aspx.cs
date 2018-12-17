@@ -32,12 +32,16 @@ namespace WebApp
         void HandleAuth()
         {
             // if the request is authenticated, then we are authenticated and have information
-
-            if (Request.IsAuthenticated)
+            // (make sure we have an access token as well; if not, then we have cached idtoken
+            // but haven't made the exchange for an access token)
+            if (Request.IsAuthenticated && Container.AccessToken != null)
             {
                 btnLoginLogoff.Text = "Sign Out";
                 btnLoginLogoff.Click -= DoSignInClick;
                 btnLoginLogoff.Click += DoSignOutClick;
+
+                m_sIdentity = System.Security.Claims.ClaimsPrincipal.Current.FindFirst("preferred_username")?.Value;
+                m_sTenant = System.Security.Claims.ClaimsPrincipal.Current.FindFirst("iss")?.Value;
             }
             else
             {
@@ -47,8 +51,6 @@ namespace WebApp
             }
 
             // if we are already authenticated, we will get an identity here; otherwise null
-            m_sIdentity = System.Security.Claims.ClaimsPrincipal.Current.FindFirst("preferred_username")?.Value;
-            m_sTenant = System.Security.Claims.ClaimsPrincipal.Current.FindFirst("iss")?.Value;
             if (m_sTenant != null)
             {
                 Regex rex = new Regex("https://login.microsoftonline.com/([^/]*)/");
@@ -67,7 +69,7 @@ namespace WebApp
         {
             string sReturnAddress = "/webapp/default.aspx";
 
-            if (!Request.IsAuthenticated)
+            if (!Request.IsAuthenticated || Container.AccessToken == null)
             {
                 HttpContext.Current.GetOwinContext().Authentication.Challenge(
                     new AuthenticationProperties { RedirectUri = sReturnAddress },
@@ -134,6 +136,9 @@ namespace WebApp
         HttpClient HttpClientCreate()
         {
             HttpClient client = new HttpClient();
+            
+            // we have setup our webapi to take Bearer authentication, so add our access token
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Container.AccessToken);
 
             return client;
         }
