@@ -1,7 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -93,6 +99,34 @@ namespace WebApp
         }
 
         /*----------------------------------------------------------------------------
+        	%%Function: GetServiceResponse
+        	%%Qualified: WebApp._default.GetServiceResponse
+
+            call the webapi and get the response. broke this out because its nice
+            to be able to collect all the async calls in the same place.
+
+            would be really nice to use await in here, but every time i try it, i get
+            threading issues, so old school task it is. 
+        ----------------------------------------------------------------------------*/
+        string GetServiceResponse()
+        {
+            HttpClient client = new HttpClient();
+            Task<HttpResponseMessage> tskResponse = client.GetAsync("http://localhost/webapisvc/api/websvc/test");
+                                    
+            tskResponse.Wait();
+
+            string sResponse;
+
+            using (MemoryStream stm = new MemoryStream())
+            {
+                tskResponse.Result.Content.CopyToAsync(stm).Wait();
+                sResponse = Encoding.UTF8.GetString(stm.ToArray());
+            }
+
+            return sResponse;
+        }
+
+        /*----------------------------------------------------------------------------
         	%%Function: DoCallService
         	%%Qualified: WebApp._default.DoCallService
 
@@ -101,6 +135,8 @@ namespace WebApp
         protected void DoCallService(object sender, EventArgs e)
         {
             divOutput.InnerHtml += "DoCallService Called<br/>";
+
+            divOutput.InnerHtml += GetServiceResponse();
         }
     }
 }
