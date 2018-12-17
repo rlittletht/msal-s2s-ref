@@ -108,9 +108,8 @@ namespace WebApp
             would be really nice to use await in here, but every time i try it, i get
             threading issues, so old school task it is. 
         ----------------------------------------------------------------------------*/
-        string GetServiceResponse()
+        string GetServiceResponse(HttpClient client)
         {
-            HttpClient client = new HttpClient();
             Task<HttpResponseMessage> tskResponse = client.GetAsync("http://localhost/webapisvc/api/websvc/test");
                                     
             tskResponse.Wait();
@@ -127,6 +126,19 @@ namespace WebApp
         }
 
         /*----------------------------------------------------------------------------
+        	%%Function: HttpClientCreate
+        	%%Qualified: WebApp._default.HttpClientCreate
+            
+            setup the http client for the webapi calls we're going to make
+        ----------------------------------------------------------------------------*/
+        HttpClient HttpClientCreate()
+        {
+            HttpClient client = new HttpClient();
+
+            return client;
+        }
+
+        /*----------------------------------------------------------------------------
         	%%Function: DoCallService
         	%%Qualified: WebApp._default.DoCallService
 
@@ -136,7 +148,9 @@ namespace WebApp
         {
             divOutput.InnerHtml += "DoCallService Called<br/>";
 
-            divOutput.InnerHtml += GetServiceResponse();
+            HttpClient client = HttpClientCreate();
+
+            divOutput.InnerHtml += GetServiceResponse(client);
         }
     }
 }
