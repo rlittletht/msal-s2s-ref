@@ -8,3 +8,7 @@ More documentation will be added here to describe the implementation.
 Branches based on master branch will augment this readme file to describe what the branch achieves. The goal is to show various stages of implementation, eventually arriving at a WebApp (client application) that calls a WebApi, both separate registered application with Azure/Microsoft. The WebApi then access the Microsoft Graph using the credentials provided by the user in the initial login.
 
 (User logs in with WebApp, then gets a token to call the WebApi, then the WebApi uses the authentication from the WebApp to access the MS Graph on behalf of the user).
+
+**BasicWebApiService**
+
+This branch implements a basic, unauthenticated WebApi. In the end, you have a client app that can call the WebApi, with no authentication.
