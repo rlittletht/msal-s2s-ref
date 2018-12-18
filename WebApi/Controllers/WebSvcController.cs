@@ -7,6 +7,7 @@ using System.Web.Http;
 
 namespace WebApi.Controllers
 {
+    [Authorize]
     public class WebSvcController : ApiController
     {
         public IHttpActionResult GetTestResult(string id)
