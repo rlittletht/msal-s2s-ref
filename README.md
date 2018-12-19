@@ -36,8 +36,8 @@ The application has no delegated permissions (these will be explicitly requested
 
 Next, since the point of this example is to show two separate entities communicating (two different applications), we also have a WebApi registered. This is also created as a "Converged Application", with a single platform added, "WebApi":
 	
-	* There is a set of preauthorized applications, add the application ID from your WebApp here and give it a score of access_as_user.
-	* 	Also leave the default graph permission "User.Read" for delegated permissions.
+* There is a set of preauthorized applications, add the application ID from your WebApp here and give it a score of access_as_user.
+* Also leave the default graph permission "User.Read" for delegated permissions.
 
 In order to grant consent to the WebApi, you have to get an AuthorizationUrl. In order to get an AuthorizationUrl, you have to have a redirectUri. When you register a WebApi, you don't have an option to create a redirectUri. So, you have to go to your WebApi registration and ADD a Web platform with a redirectUri specifically to allow consent to be granted. (This doesn't seem like a great way to do it, but I'm getting desperate and can't figure out another way).  Also, since you are going to tell the ConfidentialClientApplication that it should redirect to a particular URI, we need to make sure there's really a page there to redirect to.
 
