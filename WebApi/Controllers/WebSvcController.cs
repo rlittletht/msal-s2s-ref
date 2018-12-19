@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
+using System.Net.Http.Headers;
 using System.Windows.Forms.VisualStyles;
 using Microsoft.Identity.Client;
 
@@ -143,9 +144,9 @@ namespace WebApi.Controllers
 
                 sAccessToken = GetAccessTokenForGraph();
             }
-            catch (WebApiExceptionNeedConsent exc)
+            catch (WebApiExceptionNeedConsent)
             {
-                return $"FAILED to acquire token for graph, consent needed: <a href='{exc.AuthorizationUrl}' target='_blank'>Click Here to Grant Consent</a>";
+                throw; // allow this to propagate up -- we will handle this at the top level
             }
             catch (Exception exc)
             {
@@ -166,12 +167,25 @@ namespace WebApi.Controllers
         ----------------------------------------------------------------------------*/
         public IHttpActionResult GetTestResult(string id)
         {
-            string sClaimsDescription = GetCurrentClaimsDescription();
-            string sGraphInfo = GetUserInfoFromGraph();
+            string sReturn = null;
 
-            string sReturn = $"Context: [{sClaimsDescription}]; GraphInfo: [{sGraphInfo}]; Return: {id}";
+            try
+            {
+                string sClaimsDescription = GetCurrentClaimsDescription();
+                string sGraphInfo = GetUserInfoFromGraph();
 
-            
+                sReturn = $"Context: [{sClaimsDescription}]; GraphInfo: [{sGraphInfo}]; Return: {id}";
+            }
+            catch (WebApiExceptionNeedConsent exc)
+            {
+                // this exception means we need to return an authentication error
+
+                // NOTE: this is probably a horrible abuse of the Unauthorized() error code. I'd love
+                // to know a better way to flow this consent URL back to the calling client!
+                return Unauthorized(new AuthenticationHeaderValue("need-consent", exc.AuthorizationUrl));
+            }
+            // any other exceptions should just go unhandled (they should have been handled under us anyway
+
             return Ok(sReturn);
         }
     }
