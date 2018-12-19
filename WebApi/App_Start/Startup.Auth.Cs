@@ -27,6 +27,8 @@ namespace WebApi
                 
                 // Change below to 'true' if you want this Web API to accept tokens issued to one Azure AD tenant only (single-tenant)
                 ValidateIssuer = false,
+                // save the signin token so we can have a bootstrap context to use to build the UserAssertion
+                SaveSigninToken = true,
             };
 
             app.UseOAuthBearerAuthentication(new OAuthBearerAuthenticationOptions
