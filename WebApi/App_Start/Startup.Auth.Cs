@@ -9,6 +9,7 @@ namespace WebApi
     public partial class Startup
     {
         public static string clientId = ConfigurationManager.AppSettings["ClientId"];
+        public static string appKey = ConfigurationManager.AppSettings["AppKey"];
         public static string clientIdAudience = ConfigurationManager.AppSettings["ValidClientAudience"];
 
         public void ConfigureAuth(IAppBuilder app)
