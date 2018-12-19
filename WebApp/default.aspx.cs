@@ -97,7 +97,8 @@ namespace WebApp
         protected void Page_Load(object sender, EventArgs e)
         {
             HandleAuth();
-            divOutput.InnerHtml += $"Current User: {m_sIdentity}<br/>Tenant: {m_sTenant}";
+            if (!IsPostBack)
+                divOutput.InnerHtml += $"<br/>Current User: {m_sIdentity}<br/>Tenant: {m_sTenant}<br/>";
         }
 
         /*----------------------------------------------------------------------------
@@ -156,6 +157,7 @@ namespace WebApp
             HttpClient client = HttpClientCreate();
 
             divOutput.InnerHtml += GetServiceResponse(client);
+            divOutput.InnerHtml += "<br/>";
         }
     }
 }
