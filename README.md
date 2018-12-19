@@ -23,3 +23,29 @@ At this point, the WebApi is *protected*. This is a pretty good stopping point f
 
 This branch implements the WebApi calling the Microsoft Graph on behalf of the user that is accessing the WebApi.
 
+In order to build and run this sample, you will need to register *two* applications with Azure/Live (at https://account.live.com/developers/applications/index).
+
+First, we have an Application registered for the WebApp itself. This was created as a "Converged Application", with a single platform added "Web":
+* Allow Implicit Flow = yes
+* Redirect URL = http://localhost/webapp/default.aspx
+		
+The application has no delegated permissions (these will be explicitly requested during authentication).
+	
+(NOTE: Its assumed you are publishing to http://localhost/webapp, and that an app was created there in IIS.
+![Screenshot for WebApp registration] https://github.com/rlittletht/msal-s2s-ref/blob/WebApiGraphOnBehalfReference/WebAppRegistration_Clipping.png
+
+Next, since the point of this example is to show two separate entities communicating (two different applications), we also have a WebApi registered. This is also created as a "Converged Application", with a single platform added, "WebApi":
+	
+	* There is a set of preauthorized applications, add the application ID from your WebApp here and give it a score of access_as_user.
+	* 	Also leave the default graph permission "User.Read" for delegated permissions.
+
+In order to grant consent to the WebApi, you have to get an AuthorizationUrl. In order to get an AuthorizationUrl, you have to have a redirectUri. When you register a WebApi, you don't have an option to create a redirectUri. So, you have to go to your WebApi registration and ADD a Web platform with a redirectUri specifically to allow consent to be granted. (This doesn't seem like a great way to do it, but I'm getting desperate and can't figure out another way).  Also, since you are going to tell the ConfidentialClientApplication that it should redirect to a particular URI, we need to make sure there's really a page there to redirect to.
+
+Here is what the WebApi registration looks like with both the Web and Web API platforms added:
+![Screenshot for WebApp registration] https://github.com/rlittletht/msal-s2s-ref/blob/WebApiGraphOnBehalfReference/WebApiRegistration_Clipping.png
+
+
+
+ 
+
+
