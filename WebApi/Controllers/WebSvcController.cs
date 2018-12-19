@@ -42,13 +42,12 @@ namespace WebApi.Controllers
         	get the url that the user must visit in order to grant consent for the 
             WebApi to access the graph on the user's behalf.
         ----------------------------------------------------------------------------*/
-        string GetAuthenticationUrlForConsent(ConfidentialClientApplication cca, string []graphScopes)
+        async Task<string> GetAuthenticationUrlForConsent(ConfidentialClientApplication cca, string []graphScopes)
         {
             // if this throws, just let it throw
-            Task<Uri> tskUri = cca.GetAuthorizationRequestUrlAsync(graphScopes, "", null);
-            tskUri.Wait();
+            Uri uri = await cca.GetAuthorizationRequestUrlAsync(graphScopes, "", null);
 
-            return tskUri.Result.AbsoluteUri;
+            return uri.AbsoluteUri;
         }
 
         /*----------------------------------------------------------------------------
@@ -82,7 +81,7 @@ namespace WebApi.Controllers
             was created by the *calling application*. So, we will exchange that token
             for another token using AcquireTokenOnBehalfOfAsync. 
         ----------------------------------------------------------------------------*/
-        string GetAccessTokenForGraph()
+        async Task<string> GetAccessTokenForGraph()
         {
             // we need to create a cca in order to get a token for the graph
             // (this cca will use our WebApi clientId and secret
@@ -101,12 +100,11 @@ namespace WebApi.Controllers
 
             UserAssertion userAssertion = BuildUserAssertion();
 
-            Task<AuthenticationResult> tskAuthResult = null;
+            AuthenticationResult authResult = null;
 
             try
             {
-                tskAuthResult = cca.AcquireTokenOnBehalfOfAsync(graphScopes, userAssertion);
-                tskAuthResult.Wait();
+                authResult = await cca.AcquireTokenOnBehalfOfAsync(graphScopes, userAssertion);
             }
             catch (Exception exc)
             {
@@ -116,7 +114,7 @@ namespace WebApi.Controllers
                     // We failed because we don't have consent from the user -- even
                     // though they consented for the WebApp application to access
                     // the graph, they also need to consent to this WebApi to grant permission
-                    string sUrl = GetAuthenticationUrlForConsent(cca, graphScopes);
+                    string sUrl = await GetAuthenticationUrlForConsent(cca, graphScopes);
 
                     throw new WebApiExceptionNeedConsent(sUrl, "WebApi does not have consent from the user to access the graph on behalf of the user", exc);
                 }
@@ -124,7 +122,7 @@ namespace WebApi.Controllers
                 // otherwise, just rethrow
                 throw;
             }
-            return tskAuthResult.Result.AccessToken;
+            return authResult.AccessToken;
         }
 
         /*----------------------------------------------------------------------------
@@ -134,7 +132,7 @@ namespace WebApi.Controllers
             call the MS graph and get the user info for the user that we have
             an access token for.
         ----------------------------------------------------------------------------*/
-        string GetUserInfoFromGraph()
+        async Task<string> GetUserInfoFromGraph()
         {
             string sRet = "";
 
@@ -142,7 +140,7 @@ namespace WebApi.Controllers
             {
                 string sAccessToken = null;
 
-                sAccessToken = GetAccessTokenForGraph();
+                sAccessToken = await GetAccessTokenForGraph();
 
                 // Call the Graph API and retrieve the user's profile.  This is just a standard
                 // rest api call, with the bearer token set to the access token we just got.
@@ -150,17 +148,13 @@ namespace WebApi.Controllers
 
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", sAccessToken);
-                Task<HttpResponseMessage> tskResponse = client.SendAsync(request);
-                tskResponse.Wait();
-
-                HttpResponseMessage response = tskResponse.Result;
+                HttpResponseMessage response = await client.SendAsync(request);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    Task<string> tskString = response.Content.ReadAsStringAsync();
-                    tskString.Wait();
+                    string responseString = await response.Content.ReadAsStringAsync();
 
-                    sRet = $"jsonMe: {tskString.Result}";
+                    sRet = $"jsonMe: {responseString}";
                 }
                 else
                 {
@@ -188,14 +182,14 @@ namespace WebApi.Controllers
             called this WebApi)
         	
         ----------------------------------------------------------------------------*/
-        public IHttpActionResult GetTestResult(string id)
+        public async Task<IHttpActionResult> GetTestResult(string id)
         {
             string sReturn = null;
 
             try
             {
                 string sClaimsDescription = GetCurrentClaimsDescription();
-                string sGraphInfo = GetUserInfoFromGraph();
+                string sGraphInfo = await GetUserInfoFromGraph();
 
                 sReturn = $"Context: [{sClaimsDescription}]; GraphInfo: [{sGraphInfo}]; Return: {id}";
             }
