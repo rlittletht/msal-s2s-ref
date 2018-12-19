@@ -11,10 +11,10 @@ Branches based on master branch will augment this readme file to describe what t
 
 Branches:
 
-BasicClientWebApp - Just a web page that uses MSAL to authenticate
-BasicWebApiService - Adds a WebApi that has no authentication (but is called from the client WebApp)
-WebApiReference - Adds authentication to the WebApi (meaning there are 2 apps registered with Azure/Live)
-WebApiGraphOnBehalf - Adds consent flow to the WebApi and now the WebApi access the MS Graph on behalf of the user logged that is logged into the client WebApp
+* BasicClientWebApp - Just a web page that uses MSAL to authenticate
+* BasicWebApiService - Adds a WebApi that has no authentication (but is called from the client WebApp)
+* WebApiReference - Adds authentication to the WebApi (meaning there are 2 apps registered with Azure/Live)
+* WebApiGraphOnBehalf - Adds consent flow to the WebApi and now the WebApi access the MS Graph on behalf of the user logged that is logged into the client WebApp
 
 Visit all of the various branches for the final implementation (and look at the history in those branches for a sort of "step by step" story of how its achieved.
 
