@@ -143,6 +143,29 @@ namespace WebApi.Controllers
                 string sAccessToken = null;
 
                 sAccessToken = GetAccessTokenForGraph();
+
+                // Call the Graph API and retrieve the user's profile.  This is just a standard
+                // rest api call, with the bearer token set to the access token we just got.
+                HttpClient client = new HttpClient();
+
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me/");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", sAccessToken);
+                Task<HttpResponseMessage> tskResponse = client.SendAsync(request);
+                tskResponse.Wait();
+
+                HttpResponseMessage response = tskResponse.Result;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Task<string> tskString = response.Content.ReadAsStringAsync();
+                    tskString.Wait();
+
+                    sRet = $"jsonMe: {tskString.Result}";
+                }
+                else
+                {
+                    sRet = $"FAILED to call Graph: [{response.StatusCode}: {response.ReasonPhrase}";
+                }
             }
             catch (WebApiExceptionNeedConsent)
             {
