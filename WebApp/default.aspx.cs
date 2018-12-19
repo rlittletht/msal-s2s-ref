@@ -117,6 +117,9 @@ namespace WebApp
                                     
             tskResponse.Wait();
 
+            if (tskResponse.Result.StatusCode != HttpStatusCode.OK)
+                return $"Service Call Failed: {tskResponse.Result.StatusCode}";
+
             string sResponse;
 
             using (MemoryStream stm = new MemoryStream())
@@ -125,7 +128,8 @@ namespace WebApp
                 sResponse = Encoding.UTF8.GetString(stm.ToArray());
             }
 
-            return sResponse;
+            // don't allow the WebApi to return raw HTML markup
+            return Server.HtmlEncode(sResponse);
         }
 
         /*----------------------------------------------------------------------------
