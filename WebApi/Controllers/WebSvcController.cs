@@ -11,6 +11,16 @@ namespace WebApi.Controllers
     [Authorize]
     public class WebSvcController : ApiController
     {
+        /*----------------------------------------------------------------------------
+        	%%Function: GetCurrentClaimsDescription
+        	%%Qualified: WebApi.Controllers.WebSvcController.GetCurrentClaimsDescription
+
+        	build a string describing some information about the auth information 
+            provided to the webapi. Namely, the email and scope claims.
+
+            this does not call the MS graph, it just uses the information provided
+            by the caller
+        ----------------------------------------------------------------------------*/
         string GetCurrentClaimsDescription()
         {
             string sEmail = ClaimsPrincipal.Current.FindFirst("preferred_username")?.Value;
