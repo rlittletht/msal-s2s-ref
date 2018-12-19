@@ -48,7 +48,7 @@ namespace WebApi.Controllers
 
             if (bootstrapContext == null)
             {
-                throw new Exception("Bootstrap context is null");
+                throw new WebApiException("Bootstrap context is null");
             }
 
             JwtSecurityToken tok = new JwtSecurityToken(bootstrapContext);
@@ -96,8 +96,7 @@ namespace WebApi.Controllers
                     // We failed because we don't have consent from the user -- even
                     // though they consented for the WebApp application to access
                     // the graph, they also need to consent to this WebApi to grant permission
-                    throw new Exception(
-                        "WebApi does not have consent from the user to access the graph on behalf of the user");
+                    throw new WebApiExceptionNeedConsent(null, "WebApi does not have consent from the user to access the graph on behalf of the user", exc);
                 }
 
                 // otherwise, just rethrow
