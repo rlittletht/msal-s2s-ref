@@ -35,6 +35,22 @@ namespace WebApi.Controllers
         }
 
         /*----------------------------------------------------------------------------
+        	%%Function: GetAuthenticationUrlForConsent
+        	%%Qualified: WebApi.Controllers.WebSvcController.GetAuthenticationUrlForConsent
+
+        	get the url that the user must visit in order to grant consent for the 
+            WebApi to access the graph on the user's behalf.
+        ----------------------------------------------------------------------------*/
+        string GetAuthenticationUrlForConsent(ConfidentialClientApplication cca, string []graphScopes)
+        {
+            // if this throws, just let it throw
+            Task<Uri> tskUri = cca.GetAuthorizationRequestUrlAsync(graphScopes, "", null);
+            tskUri.Wait();
+
+            return tskUri.Result.AbsoluteUri;
+        }
+
+        /*----------------------------------------------------------------------------
         	%%Function: GetUserAssertion
         	%%Qualified: WebApi.Controllers.WebSvcController.GetUserAssertion
 
@@ -69,9 +85,12 @@ namespace WebApi.Controllers
         {
             // we need to create a cca in order to get a token for the graph
             // (this cca will use our WebApi clientId and secret
+            // (be sure to use the redirectUri here that matches the Web platform
+            // that you added to the WebApi.  We will deal with potentially redirecting
+            // that back to the web client later.
             ConfidentialClientApplication cca =
                 new ConfidentialClientApplication(Startup.clientId,
-                    "http://localhost/webapisvc/api/websvc/test",
+                    "http://localhost/webapisvc/auth.aspx",
                     new ClientCredential(Startup.appKey), null, null);
 
             // ask for access to the graph defaults that our WebApi requests
@@ -96,7 +115,9 @@ namespace WebApi.Controllers
                     // We failed because we don't have consent from the user -- even
                     // though they consented for the WebApp application to access
                     // the graph, they also need to consent to this WebApi to grant permission
-                    throw new WebApiExceptionNeedConsent(null, "WebApi does not have consent from the user to access the graph on behalf of the user", exc);
+                    string sUrl = GetAuthenticationUrlForConsent(cca, graphScopes);
+
+                    throw new WebApiExceptionNeedConsent(sUrl, "WebApi does not have consent from the user to access the graph on behalf of the user", exc);
                 }
 
                 // otherwise, just rethrow
@@ -121,6 +142,10 @@ namespace WebApi.Controllers
                 string sAccessToken = null;
 
                 sAccessToken = GetAccessTokenForGraph();
+            }
+            catch (WebApiExceptionNeedConsent exc)
+            {
+                return $"FAILED to acquire token for graph, consent needed: <a href='{exc.AuthorizationUrl}' target='_blank'>Click Here to Grant Consent</a>";
             }
             catch (Exception exc)
             {
