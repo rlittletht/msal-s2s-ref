@@ -17,6 +17,8 @@ using Owin;
 namespace WebApp
 {
     // we need some place to stash the accesstoken, so when we get it during authentication, the application can access it
+    // (NOTE: This is a cheap hack to share the token. Don't actually do this since you will have one instance of this
+    // variable per app, which means all users will share it. Not a good plan.
     public static class Container
     {
         public static string AccessToken { get; set; }
