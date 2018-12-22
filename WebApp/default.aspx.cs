@@ -5,12 +5,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using Microsoft.Identity.Client;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OpenIdConnect;
@@ -21,6 +23,18 @@ namespace WebApp
     {
         private string m_sIdentity;
         private string m_sTenant;
+
+        /*----------------------------------------------------------------------------
+        	%%Function: IsSignedIn
+        	%%Qualified: WebApp._default.IsSignedIn
+        	
+            return true if the signin process is complete -- this includes making 
+            sure there is an entry for this userid in the TokenCache
+        ----------------------------------------------------------------------------*/
+        bool IsSignedIn()
+        {
+            return Request.IsAuthenticated && FTokenCachePopulated();
+        }
 
         /*----------------------------------------------------------------------------
         	%%Function: HandleAuth
@@ -34,7 +48,7 @@ namespace WebApp
             // if the request is authenticated, then we are authenticated and have information
             // (make sure we have an access token as well; if not, then we have cached idtoken
             // but haven't made the exchange for an access token)
-            if (Request.IsAuthenticated && Container.AccessToken != null)
+            if (IsSignedIn())
             {
                 btnLoginLogoff.Text = "Sign Out";
                 btnLoginLogoff.Click -= DoSignInClick;
@@ -69,7 +83,7 @@ namespace WebApp
         {
             string sReturnAddress = "/webapp/default.aspx";
 
-            if (!Request.IsAuthenticated || Container.AccessToken == null)
+            if (!IsSignedIn())
             {
                 HttpContext.Current.GetOwinContext().Authentication.Challenge(
                     new AuthenticationProperties { RedirectUri = sReturnAddress },
@@ -159,14 +173,87 @@ namespace WebApp
             
             setup the http client for the webapi calls we're going to make
         ----------------------------------------------------------------------------*/
-        HttpClient HttpClientCreate()
+        HttpClient HttpClientCreate(string sAccessToken)
         {
             HttpClient client = new HttpClient();
             
             // we have setup our webapi to take Bearer authentication, so add our access token
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Container.AccessToken);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", sAccessToken);
 
             return client;
+        }
+
+        /*----------------------------------------------------------------------------
+        	%%Function: GetUserId
+        	%%Qualified: WebApp._default.GetUserId
+        	
+            convenient way to get the current user id (so we can get to the right
+            TokenCache)
+        ----------------------------------------------------------------------------*/
+        string GetUserId()
+        {
+            return ClaimsPrincipal.Current.FindFirst(ClaimTypes.NameIdentifier).Value;
+        }
+
+        /*----------------------------------------------------------------------------
+        	%%Function: GetContextBase
+        	%%Qualified: WebApp._default.GetContextBase
+        	
+            get the HttpContextBase we can use for the SessionState (which is needed
+            by our TokenCache implemented by MSALSessionCache
+        ----------------------------------------------------------------------------*/
+        HttpContextBase GetContextBase()
+        {
+            return Context.GetOwinContext().Environment["System.Web.HttpContextBase"] as HttpContextBase;
+        }
+
+        /*----------------------------------------------------------------------------
+        	%%Function: GetAccessToken
+        	%%Qualified: WebApp._default.GetAccessToken
+
+            Get an access token for accessing the WebApi. This will use 
+            AcquireTokenSilentAsync to get the token. Since this is using the 
+            same tokencache as we populated when the user logged in, we will
+            get the access token from that cache. 
+        ----------------------------------------------------------------------------*/
+        string GetAccessToken()
+        {
+            if (!IsSignedIn())
+                return null;
+
+            // Retrieve the token with the specified scopes
+            var scopes = new string[] {Startup.scopeWebApi};
+            string userId = GetUserId();
+            TokenCache tokenCache = new MSALSessionCache(userId, GetContextBase()).GetMsalCacheInstance();
+            ConfidentialClientApplication cca = new ConfidentialClientApplication(Startup.clientId, Startup.authority, Startup.redirectUri, new ClientCredential(Startup.appKey), tokenCache, null);
+
+            Task<IEnumerable<IAccount>> tskAccounts = cca.GetAccountsAsync();
+            tskAccounts.Wait();
+
+            IAccount account = tskAccounts.Result.FirstOrDefault();
+
+            Task<AuthenticationResult> tskResult = cca.AcquireTokenSilentAsync(scopes, account, Startup.authority, false);
+
+            tskResult.Wait();
+            return tskResult.Result.AccessToken;
+        }
+
+        /*----------------------------------------------------------------------------
+        	%%Function: FTokenCachePopulated
+        	%%Qualified: WebApp._default.FTokenCachePopulated
+        	
+        	return true if our TokenCache has been populated for the current 
+            UserId.  Since our TokenCache is currently only stored in the session, 
+            if our session ever gets reset, we might get into a state where there
+            is a cookie for auth (and will let us automatically login), but the
+            TokenCache never got populated (since it is only populated during the
+            actual authentication process). If this is the case, we need to treat
+            this as if the user weren't logged in. The user will SignIn again, 
+            populating the TokenCache.
+        ----------------------------------------------------------------------------*/
+        bool FTokenCachePopulated()
+        {
+            return MSALSessionCache.CacheExists(GetUserId(), GetContextBase());
         }
 
         /*----------------------------------------------------------------------------
@@ -179,7 +266,8 @@ namespace WebApp
         {
             divOutput.InnerHtml += "DoCallService Called<br/>";
 
-            HttpClient client = HttpClientCreate();
+            string sAccessToken = GetAccessToken();
+            HttpClient client = HttpClientCreate(sAccessToken);
 
             divOutput.InnerHtml += GetServiceResponse(client);
             divOutput.InnerHtml += "<br/>";

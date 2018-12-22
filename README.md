@@ -23,6 +23,12 @@ At this point, the WebApi is *protected*. This is a pretty good stopping point f
 
 This branch implements the WebApi calling the Microsoft Graph on behalf of the user that is accessing the WebApi.
 
+**WebApiTokenCache**
+
+This branch removes the hacky static variable for communicating the AccessToken from the Authentication flow into the WebApp. We now use a TokenCache (persistend in Session). This also guards against the session being reset and an old cookie laying around.
+
+
+
 In order to build and run this sample, you will need to register *two* applications with Azure/Live (at https://account.live.com/developers/applications/index).
 
 First, we have an Application registered for the WebApp itself. This was created as a "Converged Application", with a single platform added "Web":
@@ -46,6 +52,5 @@ Here is what the WebApi registration looks like with both the Web and Web API pl
 
 
 
- 
 
 
