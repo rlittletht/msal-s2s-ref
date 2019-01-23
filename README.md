@@ -15,6 +15,7 @@ Branches:
 * BasicWebApiService - Adds a WebApi that has no authentication (but is called from the client WebApp)
 * WebApiReference - Adds authentication to the WebApi (meaning there are 2 apps registered with Azure/Live)
 * WebApiGraphOnBehalf - Adds consent flow to the WebApi and now the WebApi access the MS Graph on behalf of the user logged that is logged into the client WebApp
+* WebAppTokenCache - This just cleans up a little bit -- gets rid of the hacky static variable used to propagate the AccessToken and instead uses a proper TokenCache stored in the SessionState.
 
 Visit all of the various branches for the final implementation (and look at the history in those branches for a sort of "step by step" story of how its achieved.
 
